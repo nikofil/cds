@@ -31,15 +31,18 @@ import json
 import pytest
 
 from cds.modules.deposit.api import CDSDeposit, Project
+from cds.modules.deposit.serializers import ResolveRefSerializer
 from cds.modules.deposit.views import to_links_js
 from flask import current_app, request, url_for
 from invenio_accounts.models import User
 from invenio_accounts.testutils import login_user_via_session
+from invenio_deposit.fetchers import deposit_fetcher
 from invenio_files_rest.models import FileInstance, ObjectVersionTag, Bucket
 from invenio_files_rest.models import ObjectVersion
 
 from cds.modules.deposit.loaders import project_loader, video_loader
 from cds.modules.deposit.loaders.loader import MarshmallowErrors
+from invenio_records_rest.serializers import RecordSchemaJSONV1
 
 
 def test_deposit_link_factory_has_bucket(app, db, es, users, location,
@@ -183,3 +186,33 @@ def test_publish_process_files(app, db, location):
                 if str(obj.version_id) != master_version:
                     assert obj.get_tags()['master'] == master_version
                     assert obj.get_tags()['type'] == 'video'
+
+
+def test_resolve_ref_serializer(app, api_app, db, location):
+    """Test reference resolving serializer."""
+    deposit = CDSDeposit.create(dict(date='1/2/3', category='cat', type='type',
+                                     title=dict(title='title'),
+                                     report_number=dict(report_number='1234'),
+                                     videos=[]))
+    serializer = ResolveRefSerializer(RecordSchemaJSONV1)
+    with api_app.test_request_context('/deposits/'):
+        json_obj = json.loads(
+            serializer.serialize_search(deposit_fetcher, dict(hits=dict(
+               total=1,
+               hits=[dict(
+                   _id='dbcb4928-11c6-418d-8347-5464961931eb',
+                   _version=0,
+                   _source=dict(
+                       _deposit=deposit['_deposit'],
+                       videos=[{
+                           '$reference': '/api/deposits/' +
+                                         deposit['_deposit']['id']
+                       }]
+                   )
+               )]
+            ))))
+        video_metadata =\
+            json_obj['hits']['hits'][0]['metadata']['videos'][0]['metadata']
+        assert video_metadata['title']['title'] == 'title'
+        assert video_metadata['date'] == '1/2/3'
+        assert video_metadata['category'] == 'cat'

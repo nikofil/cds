@@ -118,36 +118,6 @@ function cdsDepositsCtrl(
     );
   };
 
-  this.getOverallState = function() {
-    var states = {};
-    var values = [];
-    that.state = 'PENDING';
-
-    for (var key in that.overallState) {
-      values.push(that.overallState[key]);
-    }
-    depositStates.forEach(function(i) {
-      states[i] = 'PENDING';
-
-      var keyIncludes = function(key) {
-        return function(val) {
-          return val[key].includes(i);
-        };
-      };
-
-      if (values.every(keyIncludes('SUCCESS'))) {
-        states[i] = 'SUCCESS';
-      } else if (values.some(keyIncludes('FAILURE'))) {
-        states[i] = 'FAILURE';
-      } else if (values.some(keyIncludes('STARTED'))
-        || values.some(keyIncludes('SUCCESS'))) {
-        states[i] = 'STARTED';
-      }
-      that.state = states[i];
-    });
-    return states;
-  };
-
   this.isVideoFile = function(key) {
     var videoRegex = /(.*)\.(mp4|mov)$/;
     return key.match(videoRegex);
@@ -339,7 +309,7 @@ function cdsDepositsCtrl(
           thisState[prevState], thisState[curState]);
       });
     });
-    that.aggregatedState = that.getOverallState();
+    $scope.$apply();
   });
 }
 

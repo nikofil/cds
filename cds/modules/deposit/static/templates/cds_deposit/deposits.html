@@ -65,17 +65,8 @@
         <div class="row">
           <div class="col-md-9">
             <ul class="list-inline text-left">
-              <li>
-                <i class="fa fa-fw {{ $ctrl.aggregatedState['file_download'] | progressIcon }} {{ $ctrl.aggregatedState['file_download'] | progressClass }}"></i> File download
-              </li>
-              <li>
-                <i class="fa fa-fw {{ $ctrl.aggregatedState['file_video_metadata_extraction'] | progressIcon }} {{ $ctrl.aggregatedState['file_video_metadata_extraction'] | progressClass }}"></i> Extract metadata
-              </li>
-              <li>
-                <i class="fa fa-fw {{ $ctrl.aggregatedState['file_video_extract_frames'] | progressIcon }} {{ $ctrl.aggregatedState['file_video_extract_frames'] | progressClass }}"></i> Extract frames
-              </li>
-              <li>
-                <i class="fa fa-fw {{ $ctrl.aggregatedState['file_transcode'] | progressIcon}} {{ $ctrl.aggregatedState['file_transcode'] | progressClass}}"></i> File transcode
+              <li ng-repeat="(task, status) in ($ctrl.children | progressStatus)">
+                <i class="fa fa-fw {{ status | progressIcon }} {{ status | progressClass }}"></i> {{ task | taskRepr }}
               </li>
             </ul>
           </div>
